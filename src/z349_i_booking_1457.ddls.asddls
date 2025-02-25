@@ -21,7 +21,7 @@ define view entity z349_i_booking_1457
 
       /* Associations */
       _BookingStatus,
-      _BookingSupplement,
+      _BookingSupplement : redirected to composition child z349_i_bksuppl_1457,
       _Carrier,
       _Connection,
       _Customer,
