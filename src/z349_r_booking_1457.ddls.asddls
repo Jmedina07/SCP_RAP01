@@ -11,9 +11,15 @@ define view entity z349_r_booking_1457
   as select from z349_booking_457
   
   association to parent z349_r_travel_1457 as _Travel on $projection.TravelUUID = _Travel.TravelUUID
-  
-  
+   
   composition [0..*] of z349_r_bksuppl_1457 as _BookingSupplement
+
+
+  association [1..1] to /DMO/I_Customer          as _Customer      on  $projection.CustomerID = _Customer.CustomerID
+  association [1..1] to /DMO/I_Carrier           as _Carrier       on  $projection.AirlineID = _Carrier.AirlineID
+  association [1..1] to /DMO/I_Connection        as _Connection    on  $projection.AirlineID    = _Connection.AirlineID
+                                                                   and $projection.ConnectionID = _Connection.ConnectionID
+  association [1..1] to /DMO/I_Booking_Status_VH as _BookingStatus on  $projection.BookingStatus = _BookingStatus.BookingStatus  
 {
   key booking_uuid         as BookingUUID,
       parent_uuid          as TravelUUID,
@@ -21,7 +27,7 @@ define view entity z349_r_booking_1457
       booking_id           as BookingId,
       booking_date         as BookingDate,
       customer_id          as CustomerID,
-      carrier_id           as CarrierID,
+      carrier_id           as AirlineID,
       connection_id        as ConnectionID,
       flight_date          as FlightDate,
       @Semantics.amount.currencyCode: 'CurrencyCode'
@@ -35,5 +41,9 @@ define view entity z349_r_booking_1457
       
       
       _Travel,
-      _BookingSupplement
+      _BookingSupplement,
+      _Customer,
+      _Carrier,
+      _Connection,
+      _BookingStatus
 }
