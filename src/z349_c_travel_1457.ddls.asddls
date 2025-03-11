@@ -12,7 +12,7 @@ define root view entity z349_c_travel_1457
   key TravelUUID,
 
       @Search.defaultSearchElement: true
-      TravelId,
+      TravelID,
 
       @Search.defaultSearchElement: true
       @ObjectModel.text.element: [ 'AgencyName' ]

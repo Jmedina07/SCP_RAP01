@@ -146,7 +146,7 @@
      <MASK>      S</MASK>
      <DDTEXT>Standard Include for Draft Administration (BDL Syntax Check)</DDTEXT>
      <COMPTYPE>S</COMPTYPE>
-     <GROUPNAME>%AMIN</GROUPNAME>
+     <GROUPNAME>%ADMIN</GROUPNAME>
     </DD03P>
    </DD03P_TABLE>
    <TABL_EXTRAS>

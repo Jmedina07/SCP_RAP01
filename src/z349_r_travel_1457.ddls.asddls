@@ -20,7 +20,7 @@ define root view entity z349_r_travel_1457
 {
   key travel_uuid           as TravelUUID,
 
-      travel_id             as TravelId,
+      travel_id             as TravelID,
       agency_id             as AgencyID,
       customer_id           as CustomerID,
       begin_date            as BeginDate,
