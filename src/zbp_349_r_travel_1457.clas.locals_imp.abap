@@ -1,6 +1,13 @@
 CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
 
+    CONSTANTS:
+      BEGIN OF travel_status,
+        open     TYPE c LENGTH 1 VALUE 'O',
+        accepted TYPE c LENGTH 1 VALUE 'A',
+        rejected TYPE c LENGTH 1 VALUE 'X',
+      END OF travel_status.
+
     METHODS get_instance_features FOR INSTANCE FEATURES
       IMPORTING keys REQUEST requested_features FOR Travel RESULT result.
 
@@ -69,6 +76,23 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD acceptTravel.
+
+    MODIFY ENTITIES OF z349_r_travel_1457 IN LOCAL MODE
+           ENTITY Travel
+           UPDATE FIELDS ( OverallStatus )
+           WITH VALUE #( FOR key IN keys ( %tky          = key-%tky
+                                           OverallStatus = travel_status-accepted ) ).
+
+    READ ENTITIES OF z349_r_travel_1457 IN LOCAL MODE
+         ENTITY Travel
+         ALL FIELDS WITH
+         CORRESPONDING #( keys )
+         RESULT DATA(travels).
+
+    result = VALUE #( FOR travel IN travels ( %tky = travel-%tky
+                                              %param = travel  ) ).
+
+
   ENDMETHOD.
 
   METHOD deductDiscount.
@@ -78,6 +102,22 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD rejectTravel.
+
+    MODIFY ENTITIES OF z349_r_travel_1457 IN LOCAL MODE
+         ENTITY Travel
+         UPDATE FIELDS ( OverallStatus )
+         WITH VALUE #( FOR key IN keys ( %tky          = key-%tky
+                                         OverallStatus = travel_status-rejected ) ).
+
+    READ ENTITIES OF z349_r_travel_1457 IN LOCAL MODE
+         ENTITY Travel
+         ALL FIELDS WITH
+         CORRESPONDING #( keys )
+         RESULT DATA(travels).
+
+    result = VALUE #( FOR travel IN travels ( %tky = travel-%tky
+                                              %param = travel  ) ).
+
   ENDMETHOD.
 
   METHOD Resume.
