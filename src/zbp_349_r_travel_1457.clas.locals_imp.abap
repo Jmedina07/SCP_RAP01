@@ -127,9 +127,47 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD setStatusToOpen.
+
+  READ ENTITIES OF z349_r_travel_1457 IN LOCAL MODE
+         ENTITY Travel
+         FIELDS ( OverallStatus )
+         WITH CORRESPONDING #( keys )
+         RESULT DATA(travels).
+
+    DELETE travels WHERE OverallStatus IS NOT INITIAL.
+
+    CHECK travels IS NOT INITIAL.
+
+    MODIFY ENTITIES OF z349_r_travel_1457 IN LOCAL MODE
+         ENTITY Travel
+         UPDATE FIELDS ( OverallStatus )
+         WITH VALUE #( FOR travel IN travels INDEX INTO i ( %tky = travel-%tky
+                                                            OverallStatus = travel_status-open ) ).
+
   ENDMETHOD.
 
   METHOD setTravelNumber.
+
+    READ ENTITIES OF z349_r_travel_1457 IN LOCAL MODE
+         ENTITY Travel
+         FIELDS ( TravelID )
+         WITH CORRESPONDING #( keys )
+         RESULT DATA(travels).
+
+    DELETE travels WHERE TravelID IS NOT INITIAL.
+
+    CHECK travels IS NOT INITIAL.
+
+    SELECT SINGLE FROM z349_r_travel_1457
+            FIELDS MAX( TravelID )
+            INTO @DATA(max_TravelID).
+
+    MODIFY ENTITIES OF z349_r_travel_1457 IN LOCAL MODE
+         ENTITY Travel
+         UPDATE FIELDS ( TravelID )
+         WITH VALUE #( FOR travel IN travels INDEX INTO i ( %tky = travel-%tky
+                                                            TravelID = max_TravelID + i ) ).
+
   ENDMETHOD.
 
   METHOD validateAgency.
