@@ -13,7 +13,7 @@ etag master LocalLastChangedAt
 //Me quede en 2:10
 {
   create ( precheck );
-  update;
+  update ( precheck );
   delete;
   association _Booking { create ( features : instance, authorization : update ); with draft; }
 

@@ -42,9 +42,42 @@ CLASS lhc_Booking IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD calculateTotalPrice.
+
+    " Parent UUIDs
+    READ ENTITIES OF z349_r_travel_1457  IN LOCAL MODE
+         ENTITY Booking BY \_Travel
+         FIELDS ( TravelUUID  )
+         WITH CORRESPONDING #(  keys  )
+         RESULT DATA(travels).
+
+    " Trigger Re-Calculation on Root Node
+    MODIFY ENTITIES OF z349_r_travel_1457  IN LOCAL MODE
+      ENTITY Travel
+        EXECUTE reCalcTotalPrice
+          FROM CORRESPONDING  #( travels ).
+
   ENDMETHOD.
 
   METHOD setBookingDate.
+
+    READ ENTITIES OF z349_r_travel_1457 IN LOCAL MODE
+       ENTITY Booking
+         FIELDS ( BookingDate )
+         WITH CORRESPONDING #( keys )
+       RESULT DATA(bookings).
+
+    DELETE bookings WHERE BookingDate IS NOT INITIAL.
+    CHECK bookings IS NOT INITIAL.
+
+    LOOP AT bookings ASSIGNING FIELD-SYMBOL(<booking>).
+      <booking>-BookingDate = cl_abap_context_info=>get_system_date( ).
+    ENDLOOP.
+
+    MODIFY ENTITIES OF z349_r_travel_1457 IN LOCAL MODE
+      ENTITY Booking
+        UPDATE  FIELDS ( BookingDate )
+        WITH CORRESPONDING #( bookings ).
+
   ENDMETHOD.
 
   METHOD setBookingNumber.
@@ -94,6 +127,63 @@ CLASS lhc_Booking IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD validateCustomer.
+
+    DATA customers TYPE SORTED TABLE OF /dmo/customer WITH UNIQUE KEY client customer_id.
+
+    READ ENTITIES OF z349_r_travel_1457 IN LOCAL MODE
+         ENTITY Booking
+         FIELDS (  CustomerID )
+         WITH CORRESPONDING #( keys )
+         RESULT DATA(bookings).
+
+    READ ENTITIES OF z349_r_travel_1457 IN LOCAL MODE
+         ENTITY Booking BY \_Travel
+         FROM CORRESPONDING #( bookings )
+         LINK DATA(travel_booking_links).
+
+    customers = CORRESPONDING #( bookings DISCARDING DUPLICATES MAPPING customer_id = CustomerID EXCEPT * ).
+    DELETE customers WHERE customer_id IS INITIAL.
+
+
+    IF customers IS NOT INITIAL.
+
+      SELECT FROM /dmo/customer AS db
+             INNER JOIN @customers AS it ON db~customer_id = it~customer_id
+             FIELDS db~customer_id
+             INTO TABLE @DATA(valid_customers).
+
+    ENDIF.
+
+    LOOP AT bookings INTO DATA(booking).
+
+      APPEND VALUE #( %tky        = booking-%tky
+                      %state_area = 'VALIDATE_CUSTOMER' ) TO reported-booking.
+
+      IF booking-CustomerID IS INITIAL.
+
+        APPEND VALUE #( %tky = booking-%tky ) TO failed-booking.
+
+        APPEND VALUE #( %tky                = booking-%tky
+                        %state_area         = 'VALIDATE_CUSTOMER'
+                        %msg                = NEW /dmo/cm_flight_messages( textid   = /dmo/cm_flight_messages=>enter_customer_id
+                                                                           severity = if_abap_behv_message=>severity-error )
+                        %element-CustomerID = if_abap_behv=>mk-on ) TO reported-booking.
+
+      ELSEIF NOT line_exists( valid_customers[ customer_id = booking-CustomerID ] ).
+
+        APPEND VALUE #( %tky = booking-%tky ) TO failed-booking.
+
+        APPEND VALUE #( %tky                = booking-%tky
+                        %state_area         = 'VALIDATE_CUSTOMER'
+                        %msg                = NEW /dmo/cm_flight_messages( textid   = /dmo/cm_flight_messages=>customer_unkown
+                                                                           customer_id = booking-CustomerID
+                                                                           severity = if_abap_behv_message=>severity-error )
+                        %element-CustomerID = if_abap_behv=>mk-on ) TO reported-booking.
+
+      ENDIF.
+
+    ENDLOOP.
+
   ENDMETHOD.
 
   METHOD validateFlightPrice.
